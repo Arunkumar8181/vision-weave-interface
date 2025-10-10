@@ -8,6 +8,7 @@ export const Navigation = () => {
   const navItems = [
     { name: "Home", path: "/" },
     { name: "Charbot", path: "/detection" },
+    { name: "AI Chat", path: "/chat" },
     { name: "Doctors", path: "/doctors" },
     { name: "Contact", path: "/contact" },
   ];
