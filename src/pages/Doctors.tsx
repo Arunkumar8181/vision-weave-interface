@@ -1,35 +1,31 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserRound } from "lucide-react";
-import { BookingDialog } from "@/components/BookingDialog";
+import { AppointmentDialog } from "@/components/AppointmentDialog";
+import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
 const Doctors = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
+  const [selectedDoctor, setSelectedDoctor] = useState<{ id: number; name: string; specialty: string } | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
     });
 
     return () => subscription.unsubscribe();
   }, []);
-
-  const handleBookingClick = () => {
-    if (!user) {
-      navigate("/auth");
-    }
-  };
 
   const doctors = [
     {
@@ -95,15 +91,21 @@ const Doctors = () => {
                       <p>📍 {doctor.location}</p>
                       <p>⏱️ {doctor.experience}</p>
                     </div>
-                    <div className="mt-4" onClick={handleBookingClick}>
-                      {user ? (
-                        <BookingDialog doctor={doctor} userId={user.id} />
-                      ) : (
-                        <Button variant="navy" size="sm" className="w-full">
-                          Book Appointment
-                        </Button>
-                      )}
-                    </div>
+                    <Button 
+                      variant="navy" 
+                      size="sm" 
+                      className="w-full mt-4"
+                      onClick={() => {
+                        if (!user) {
+                          navigate("/auth");
+                        } else {
+                          setSelectedDoctor({ id: doctor.id, name: doctor.name, specialty: doctor.specialty });
+                          setDialogOpen(true);
+                        }
+                      }}
+                    >
+                      Book Appointment
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -111,6 +113,14 @@ const Doctors = () => {
           ))}
         </div>
       </main>
+
+      {selectedDoctor && (
+        <AppointmentDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          doctor={selectedDoctor}
+        />
+      )}
     </div>
   );
 };
