@@ -1,10 +1,36 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/Navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserRound } from "lucide-react";
+import { BookingDialog } from "@/components/BookingDialog";
+import type { User } from "@supabase/supabase-js";
 
 const Doctors = () => {
+  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleBookingClick = () => {
+    if (!user) {
+      navigate("/auth");
+    }
+  };
+
   const doctors = [
     {
       id: 1,
@@ -69,9 +95,15 @@ const Doctors = () => {
                       <p>📍 {doctor.location}</p>
                       <p>⏱️ {doctor.experience}</p>
                     </div>
-                    <Button variant="navy" size="sm" className="w-full mt-4">
-                      Book Appointment
-                    </Button>
+                    <div className="mt-4" onClick={handleBookingClick}>
+                      {user ? (
+                        <BookingDialog doctor={doctor} userId={user.id} />
+                      ) : (
+                        <Button variant="navy" size="sm" className="w-full">
+                          Book Appointment
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </CardContent>
