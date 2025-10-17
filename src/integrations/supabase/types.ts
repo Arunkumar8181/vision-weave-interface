@@ -62,6 +62,60 @@ export type Database = {
         }
         Relationships: []
       }
+      patients: {
+        Row: {
+          address: string | null
+          age: number
+          allergies: string | null
+          blood_group: string | null
+          created_at: string
+          current_medications: string | null
+          email: string | null
+          emergency_contact: string | null
+          has_diabetes: boolean | null
+          id: string
+          medical_history: string | null
+          name: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          age: number
+          allergies?: string | null
+          blood_group?: string | null
+          created_at?: string
+          current_medications?: string | null
+          email?: string | null
+          emergency_contact?: string | null
+          has_diabetes?: boolean | null
+          id?: string
+          medical_history?: string | null
+          name: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          age?: number
+          allergies?: string | null
+          blood_group?: string | null
+          created_at?: string
+          current_medications?: string | null
+          email?: string | null
+          emergency_contact?: string | null
+          has_diabetes?: boolean | null
+          id?: string
+          medical_history?: string | null
+          name?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

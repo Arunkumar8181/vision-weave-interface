@@ -3,11 +3,14 @@ import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import doctorImage from "@/assets/doctor-hero.png";
+import { useState } from "react";
+import { PatientRegistrationDialog } from "@/components/PatientRegistrationDialog";
 
 const Result = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const formData = location.state?.formData;
+  const [showRegistration, setShowRegistration] = useState(false);
 
   // Simple risk calculation based on glucose level
   const glucoseLevel = parseFloat(formData?.glucose || "0");
@@ -25,7 +28,7 @@ const Result = () => {
           <div className="bg-card rounded-3xl p-8 shadow-[var(--shadow-card)]">
             <div className="flex items-start justify-between mb-6">
               <h1 className="text-3xl font-bold text-card-foreground">Prediction Result</h1>
-              <Button variant="accent" size="sm">
+              <Button variant="accent" size="sm" onClick={() => setShowRegistration(true)}>
                 Register Patient
               </Button>
             </div>
@@ -61,26 +64,9 @@ const Result = () => {
               </div>
             </div>
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-4">
-            <Button 
-              variant="outline" 
-              onClick={() => navigate("/detection")}
-              className="flex-1"
-            >
-              New Prediction
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate("/prescription")}
-              className="flex-1"
-            >
-              View Prescription
-            </Button>
-          </div>
         </div>
       </main>
+      <PatientRegistrationDialog open={showRegistration} onOpenChange={setShowRegistration} />
     </div>
   );
 };

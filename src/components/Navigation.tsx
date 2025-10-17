@@ -1,13 +1,16 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Activity } from "lucide-react";
+import { useState } from "react";
+import { PatientRegistrationDialog } from "./PatientRegistrationDialog";
 
 export const Navigation = () => {
   const location = useLocation();
+  const [showRegistration, setShowRegistration] = useState(false);
   
   const navItems = [
     { name: "Home", path: "/" },
-    { name: "Charbot", path: "/detection" },
+    { name: "Detection", path: "/detection" },
     { name: "AI Chat", path: "/chat" },
     { name: "Doctors", path: "/doctors" },
     { name: "Contact", path: "/contact" },
@@ -35,11 +38,12 @@ export const Navigation = () => {
               {item.name}
             </Link>
           ))}
-          <Button variant="accent" size="default">
+          <Button variant="accent" size="default" onClick={() => setShowRegistration(true)}>
             Register Patient
           </Button>
         </div>
       </div>
+      <PatientRegistrationDialog open={showRegistration} onOpenChange={setShowRegistration} />
     </nav>
   );
 };
