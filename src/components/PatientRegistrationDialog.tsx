@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface PatientRegistrationDialogProps {
   open: boolean;
@@ -15,83 +16,86 @@ interface PatientRegistrationDialogProps {
 
 export const PatientRegistrationDialog = ({ open, onOpenChange }: PatientRegistrationDialogProps) => {
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     age: "",
     address: "",
-    has_diabetes: false,
     phone: "",
     email: "",
+    has_diabetes: false,
+    blood_group: "",
     medical_history: "",
     allergies: "",
     current_medications: "",
     emergency_contact: "",
-    blood_group: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to register patients",
+        variant: "destructive",
+      });
+      navigate("/auth");
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast({
-          title: "Authentication Required",
-          description: "Please log in to register a patient.",
-          variant: "destructive",
-        });
-        return;
-      }
-
       const { error } = await supabase.from("patients").insert({
-        user_id: user.id,
+        user_id: session.user.id,
         name: formData.name,
         age: parseInt(formData.age),
         address: formData.address,
-        has_diabetes: formData.has_diabetes,
         phone: formData.phone,
         email: formData.email,
+        has_diabetes: formData.has_diabetes,
+        blood_group: formData.blood_group,
         medical_history: formData.medical_history,
         allergies: formData.allergies,
         current_medications: formData.current_medications,
         emergency_contact: formData.emergency_contact,
-        blood_group: formData.blood_group,
       });
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Patient registered successfully!",
+        description: "Patient registered successfully",
       });
 
-      // Reset form
       setFormData({
         name: "",
         age: "",
         address: "",
-        has_diabetes: false,
         phone: "",
         email: "",
+        has_diabetes: false,
+        blood_group: "",
         medical_history: "",
         allergies: "",
         current_medications: "",
         emergency_contact: "",
-        blood_group: "",
       });
-
+      
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error) {
+      console.error("Error registering patient:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to register patient",
+        description: "Failed to register patient. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
@@ -104,7 +108,7 @@ export const PatientRegistrationDialog = ({ open, onOpenChange }: PatientRegistr
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Name *</Label>
+              <Label htmlFor="name">Full Name *</Label>
               <Input
                 id="name"
                 required
@@ -118,6 +122,8 @@ export const PatientRegistrationDialog = ({ open, onOpenChange }: PatientRegistr
                 id="age"
                 type="number"
                 required
+                min="1"
+                max="150"
                 value={formData.age}
                 onChange={(e) => setFormData({ ...formData, age: e.target.value })}
               />
@@ -135,7 +141,7 @@ export const PatientRegistrationDialog = ({ open, onOpenChange }: PatientRegistr
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
+              <Label htmlFor="phone">Phone Number</Label>
               <Input
                 id="phone"
                 type="tel"
@@ -159,9 +165,9 @@ export const PatientRegistrationDialog = ({ open, onOpenChange }: PatientRegistr
               <Label htmlFor="blood_group">Blood Group</Label>
               <Input
                 id="blood_group"
+                placeholder="e.g., O+, A-, B+"
                 value={formData.blood_group}
                 onChange={(e) => setFormData({ ...formData, blood_group: e.target.value })}
-                placeholder="e.g., A+, O-, B+"
               />
             </div>
             <div className="space-y-2">
@@ -178,7 +184,9 @@ export const PatientRegistrationDialog = ({ open, onOpenChange }: PatientRegistr
             <Checkbox
               id="has_diabetes"
               checked={formData.has_diabetes}
-              onCheckedChange={(checked) => setFormData({ ...formData, has_diabetes: checked as boolean })}
+              onCheckedChange={(checked) =>
+                setFormData({ ...formData, has_diabetes: checked as boolean })
+              }
             />
             <Label htmlFor="has_diabetes" className="cursor-pointer">
               Currently affected by diabetes
@@ -189,9 +197,9 @@ export const PatientRegistrationDialog = ({ open, onOpenChange }: PatientRegistr
             <Label htmlFor="medical_history">Medical History</Label>
             <Textarea
               id="medical_history"
+              placeholder="Previous conditions, surgeries, etc."
               value={formData.medical_history}
               onChange={(e) => setFormData({ ...formData, medical_history: e.target.value })}
-              placeholder="Previous conditions, surgeries, etc."
             />
           </div>
 
@@ -199,9 +207,9 @@ export const PatientRegistrationDialog = ({ open, onOpenChange }: PatientRegistr
             <Label htmlFor="allergies">Allergies</Label>
             <Textarea
               id="allergies"
+              placeholder="Drug allergies, food allergies, etc."
               value={formData.allergies}
               onChange={(e) => setFormData({ ...formData, allergies: e.target.value })}
-              placeholder="Drug allergies, food allergies, etc."
             />
           </div>
 
@@ -209,18 +217,18 @@ export const PatientRegistrationDialog = ({ open, onOpenChange }: PatientRegistr
             <Label htmlFor="current_medications">Current Medications</Label>
             <Textarea
               id="current_medications"
+              placeholder="List any medications currently being taken"
               value={formData.current_medications}
               onChange={(e) => setFormData({ ...formData, current_medications: e.target.value })}
-              placeholder="List any ongoing medications"
             />
           </div>
 
-          <div className="flex gap-3 justify-end">
+          <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" variant="navy" disabled={isSubmitting}>
-              {isSubmitting ? "Registering..." : "Register Patient"}
+            <Button type="submit" variant="navy" disabled={loading}>
+              {loading ? "Registering..." : "Register Patient"}
             </Button>
           </div>
         </form>
