@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Detection = () => {
   const navigate = useNavigate();
@@ -22,7 +23,9 @@ const Detection = () => {
     setFormData({ ...formData, [field]: value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Simple validation
@@ -31,13 +34,31 @@ const Detection = () => {
       return;
     }
 
-    // Simulate prediction
-    toast.success("Analyzing your health data...");
-    
-    // Navigate to result page after a brief delay
-    setTimeout(() => {
-      navigate("/result", { state: { formData } });
-    }, 1500);
+    setIsAnalyzing(true);
+    toast.info("Analyzing your health data with AI...");
+
+    try {
+      const { data, error } = await supabase.functions.invoke('predict-diabetes', {
+        body: { formData }
+      });
+
+      if (error) throw error;
+
+      // Navigate to result page with AI prediction
+      navigate("/result", { 
+        state: { 
+          formData,
+          prediction: data.prediction
+        } 
+      });
+      
+      toast.success("Analysis complete!");
+    } catch (error) {
+      console.error("Prediction error:", error);
+      toast.error("Failed to analyze health data. Please try again.");
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   return (
@@ -143,8 +164,13 @@ const Detection = () => {
                 </div>
               </div>
 
-              <Button type="submit" variant="navy" className="w-full h-12 text-base">
-                Predict Now
+              <Button 
+                type="submit" 
+                variant="navy" 
+                className="w-full h-12 text-base"
+                disabled={isAnalyzing}
+              >
+                {isAnalyzing ? "Analyzing..." : "Predict Now"}
               </Button>
             </form>
           </div>
